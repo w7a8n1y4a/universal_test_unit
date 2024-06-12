@@ -1,0 +1,23 @@
+{
+    "input_base_topic": [
+        "update/pepeunit"
+    ],
+    "output_base_topic": [
+        "state/pepeunit"
+    ],
+    "input_topic": [
+        "relay_state/pepeunit"
+    ],
+    "output_topic": [
+        "one/pepeunit",
+        "two/pepeunit",
+        "three/pepeunit",
+        "four/pepeunit",
+        "five/pepeunit",
+        "six/pepeunit",
+        "seven/pepeunit",
+        "acht/pepeunit",
+        "neun/pepeunit",
+        "zein/pepeunit"
+    ]
+}
