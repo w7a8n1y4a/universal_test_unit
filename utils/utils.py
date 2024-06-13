@@ -12,3 +12,8 @@ def get_unit_uuid(token: str):
 def get_unit_topics():
     with open('schema.json', 'r') as f:
         return json.loads(f.read())
+
+
+def get_topic_split(topic):
+    return tuple(topic.split('/'))
+

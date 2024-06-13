@@ -1,8 +1,15 @@
+import os
+import shutil
 import time
+import json
+import httpx
+
+import zlib
+
 from paho.mqtt import client as mqtt_client
 
 from config import settings
-from utils.utils import get_unit_topics, get_unit_uuid
+from utils.utils import get_unit_topics, get_unit_uuid, get_topic_split
 
 
 def connect_mqtt():
@@ -25,7 +32,47 @@ def connect_mqtt():
         client.subscribe(topics_sub)
 
     def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        backend_domain, destination, unit_uuid, topic_name, *_ = get_topic_split(msg.topic)
+
+        # if destination == 'input_base' and topic_name == 'update':
+        #
+        #     new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
+        #     if settings.COMMIT_VERSION != new_version:
+        #         pass
+
+        headers = {
+            'accept': 'application/json',
+            'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
+        }
+
+        wbits = 9
+        level = 9
+
+        url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+        r = httpx.get(url=url, headers=headers)
+
+        filepath = f'tmp/update.tgz'
+        with open(filepath, 'wb') as f:
+            print(filepath)
+            f.write(r.content)
+
+        shutil.rmtree('tmp/update', ignore_errors=True)
+
+        new_version_path = 'tmp/update'
+
+        os.mkdir(new_version_path)
+
+        with open(filepath, 'rb') as f:
+
+            producer = zlib.decompressobj(wbits=wbits)
+            tar_data = producer.decompress(f.read()) + producer.flush()
+
+            tar_filepath = 'tmp/update.tar'
+            with open(tar_filepath, 'wb') as tar_file:
+                tar_file.write(tar_data)
+
+            shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+
 
     def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscribed: " + str(mid) + " " + str(granted_qos))
@@ -47,7 +94,7 @@ def publish(client):
     unit_uuid = get_unit_uuid(settings.PEPEUNIT_TOKEN)
 
     while True:
-        for topic in unit_topics['output_topic']:
+        for topic in unit_topics['output_topic'][:1]:
             msg = f"messages: {msg_count // 100} {msg_count}"
             topic = f'{settings.PEPEUNIT_URL}/output/{unit_uuid}/{topic}'
             result = client.publish(topic, msg)
