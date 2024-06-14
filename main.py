@@ -1,8 +1,10 @@
 import os
 import shutil
+import sys
 import time
 import json
 import httpx
+import logging
 
 import zlib
 
@@ -34,45 +36,48 @@ def connect_mqtt():
     def on_message(client, userdata, msg):
         backend_domain, destination, unit_uuid, topic_name, *_ = get_topic_split(msg.topic)
 
-        # if destination == 'input_base' and topic_name == 'update':
-        #
-        #     new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
-        #     if settings.COMMIT_VERSION != new_version:
-        #         pass
+        if destination == 'input_base' and topic_name == 'update':
 
-        headers = {
-            'accept': 'application/json',
-            'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
-        }
+            new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
+            if settings.COMMIT_VERSION != new_version:
 
-        wbits = 9
-        level = 9
+                headers = {
+                    'accept': 'application/json',
+                    'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
+                }
 
-        url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
-        r = httpx.get(url=url, headers=headers)
+                wbits = 9
+                level = 9
 
-        filepath = f'tmp/update.tgz'
-        with open(filepath, 'wb') as f:
-            print(filepath)
-            f.write(r.content)
+                url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+                r = httpx.get(url=url, headers=headers)
 
-        shutil.rmtree('tmp/update', ignore_errors=True)
+                filepath = f'tmp/update.tgz'
+                with open(filepath, 'wb') as f:
+                    print(filepath)
+                    f.write(r.content)
 
-        new_version_path = 'tmp/update'
+                shutil.rmtree('tmp/update', ignore_errors=True)
 
-        os.mkdir(new_version_path)
+                new_version_path = 'tmp/update'
 
-        with open(filepath, 'rb') as f:
+                os.mkdir(new_version_path)
 
-            producer = zlib.decompressobj(wbits=wbits)
-            tar_data = producer.decompress(f.read()) + producer.flush()
+                with open(filepath, 'rb') as f:
 
-            tar_filepath = 'tmp/update.tar'
-            with open(tar_filepath, 'wb') as tar_file:
-                tar_file.write(tar_data)
+                    producer = zlib.decompressobj(wbits=wbits)
+                    tar_data = producer.decompress(f.read()) + producer.flush()
 
-            shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+                    tar_filepath = 'tmp/update.tar'
+                    with open(tar_filepath, 'wb') as tar_file:
+                        tar_file.write(tar_data)
 
+                    shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+
+                shutil.copytree(new_version_path, './', dirs_exist_ok=True)
+                logging.info("I'll be back")
+
+                os.execl(sys.executable, *([sys.executable] + sys.argv))
 
     def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscribed: " + str(mid) + " " + str(granted_qos))
