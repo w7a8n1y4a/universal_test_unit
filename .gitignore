@@ -2,3 +2,4 @@ env.json
 venv
 .idea
 tmp/*
+__pycache__
