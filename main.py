@@ -130,6 +130,8 @@ def publish(client):
 
             last_state_pub = time.time()
 
+        time.sleep(1)
+
 def run():
     client = connect_mqtt()
 
