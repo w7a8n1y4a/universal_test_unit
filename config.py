@@ -10,6 +10,7 @@ class BaseConfig:
     SYNC_ENCRYPT_KEY = ''
     SECRET_KEY = ''
     COMMIT_VERSION = ''
+    DELAY_PUB_MSG = 1
     PING_INTERVAL = 30
     STATE_SEND_INTERVAL = 300
 

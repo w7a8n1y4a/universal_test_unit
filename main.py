@@ -11,7 +11,7 @@ import zlib
 from paho.mqtt import client as mqtt_client
 
 from config import settings
-from utils.utils import get_unit_topics, get_unit_uuid, get_topic_split
+from utils.utils import get_unit_topics, get_unit_uuid, get_topic_split, get_unit_state
 
 
 def connect_mqtt():
@@ -98,20 +98,37 @@ def publish(client):
     unit_topics = get_unit_topics()
     unit_uuid = get_unit_uuid(settings.PEPEUNIT_TOKEN)
 
+    last_state_pub = 0
+    last_pub = 0
     while True:
-        for topic in unit_topics['output_topic'][:1]:
-            msg = f"messages: {msg_count // 100} {msg_count}"
-            topic = f'{settings.PEPEUNIT_URL}/output/{unit_uuid}/{topic}'
+        if (time.time() - last_pub) >= settings.DELAY_PUB_MSG:
+            for topic in unit_topics['output_topic'][:1]:
+                msg = f"messages: {msg_count // 100} {msg_count}"
+                topic = f'{settings.PEPEUNIT_URL}/output/{unit_uuid}/{topic}'
+                result = client.publish(topic, msg)
+                status = result[0]
+                if status == 0:
+                    print(f"Send `{msg}` to topic `{topic}`")
+                else:
+                    print(f"Failed to send message to topic {topic}")
+
+            msg_count += 1
+            last_pub = time.time()
+
+        if (time.time() - last_state_pub) >= settings.STATE_SEND_INTERVAL:
+
+            msg = get_unit_state()
+            topic = f"{settings.PEPEUNIT_URL}/output_base/{unit_uuid}/{unit_topics['output_base_topic'][0]}"
+
             result = client.publish(topic, msg)
             status = result[0]
+
             if status == 0:
                 print(f"Send `{msg}` to topic `{topic}`")
             else:
                 print(f"Failed to send message to topic {topic}")
 
-        msg_count += 1
-
-        time.sleep(1)
+            last_state_pub = time.time()
 
 def run():
     client = connect_mqtt()
