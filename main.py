@@ -98,8 +98,8 @@ def publish(client):
     unit_topics = get_unit_topics()
     unit_uuid = get_unit_uuid(settings.PEPEUNIT_TOKEN)
 
-    last_state_pub = 0
-    last_pub = 0
+    last_state_pub = time.time()
+    last_pub = time.time()
     while True:
         if (time.time() - last_pub) >= settings.DELAY_PUB_MSG:
             for topic in unit_topics['output_topic'][:1]:
