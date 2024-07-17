@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import time
+import uuid
 import json
 import httpx
 import logging
@@ -11,7 +12,7 @@ import zlib
 from paho.mqtt import client as mqtt_client
 
 from config import settings
-from utils.utils import get_unit_topics, get_unit_uuid, get_topic_split, get_unit_state
+from utils.utils import get_unit_schema, get_unit_uuid, get_topic_split, get_unit_state, get_input_topics, pub_output_topic_by_name
 
 
 def connect_mqtt():
@@ -21,63 +22,61 @@ def connect_mqtt():
         else:
             print("Failed to connect, return code %d\n", rc)
 
-        unit_uuid = get_unit_uuid(settings.PEPEUNIT_TOKEN)
-        unit_topics = get_unit_topics()
-
-        topics_sub = []
-        for input_topic in unit_topics['input_topic']:
-            topics_sub.append((f'{settings.PEPEUNIT_URL}/input/{unit_uuid}/{input_topic}', 0))
-
-        for input_topic in unit_topics['input_base_topic']:
-            topics_sub.append((f'{settings.PEPEUNIT_URL}/input_base/{unit_uuid}/{input_topic}', 0))
-
-        client.subscribe(topics_sub)
+        client.subscribe([(topic, 0) for topic in get_input_topics()])
 
     def on_message(client, userdata, msg):
-        backend_domain, destination, unit_uuid, topic_name, *_ = get_topic_split(msg.topic)
 
-        if destination == 'input_base' and topic_name == 'update':
+        struct_topic = get_topic_split(msg.topic)
 
-            new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
-            if settings.COMMIT_VERSION != new_version:
+        if len(struct_topic) == 5:
 
-                headers = {
-                    'accept': 'application/json',
-                    'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
-                }
+            backend_domain, destination, unit_uuid, topic_name, *_ = get_topic_split(msg.topic)
 
-                wbits = 9
-                level = 9
+            if destination == 'input_base_topic' and topic_name == 'update':
 
-                url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
-                r = httpx.get(url=url, headers=headers)
+                new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
+                if settings.COMMIT_VERSION != new_version:
 
-                filepath = f'tmp/update.tgz'
-                with open(filepath, 'wb') as f:
-                    print(filepath)
-                    f.write(r.content)
+                    headers = {
+                        'accept': 'application/json',
+                        'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
+                    }
 
-                shutil.rmtree('tmp/update', ignore_errors=True)
+                    wbits = 9
+                    level = 9
 
-                new_version_path = 'tmp/update'
+                    url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+                    r = httpx.get(url=url, headers=headers)
 
-                os.mkdir(new_version_path)
+                    filepath = f'tmp/update.tgz'
+                    with open(filepath, 'wb') as f:
+                        print(filepath)
+                        f.write(r.content)
 
-                with open(filepath, 'rb') as f:
+                    shutil.rmtree('tmp/update', ignore_errors=True)
 
-                    producer = zlib.decompressobj(wbits=wbits)
-                    tar_data = producer.decompress(f.read()) + producer.flush()
+                    new_version_path = 'tmp/update'
 
-                    tar_filepath = 'tmp/update.tar'
-                    with open(tar_filepath, 'wb') as tar_file:
-                        tar_file.write(tar_data)
+                    os.mkdir(new_version_path)
 
-                    shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+                    with open(filepath, 'rb') as f:
 
-                shutil.copytree(new_version_path, './', dirs_exist_ok=True)
-                logging.info("I'll be back")
+                        producer = zlib.decompressobj(wbits=wbits)
+                        tar_data = producer.decompress(f.read()) + producer.flush()
 
-                os.execl(sys.executable, *([sys.executable] + sys.argv))
+                        tar_filepath = 'tmp/update.tar'
+                        with open(tar_filepath, 'wb') as tar_file:
+                            tar_file.write(tar_data)
+
+                        shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+
+                    shutil.copytree(new_version_path, './', dirs_exist_ok=True)
+                    logging.info("I'll be back")
+
+                    os.execl(sys.executable, *([sys.executable] + sys.argv))
+        else:
+            print(struct_topic)
+            print(msg.payload.decode())
 
     def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscribed: " + str(mid) + " " + str(granted_qos))
@@ -95,30 +94,24 @@ def connect_mqtt():
 def publish(client):
     msg_count = 1
 
-    unit_topics = get_unit_topics()
-    unit_uuid = get_unit_uuid(settings.PEPEUNIT_TOKEN)
+    schema_dict = get_unit_schema()
 
     last_state_pub = time.time()
     last_pub = time.time()
     while True:
         if (time.time() - last_pub) >= settings.DELAY_PUB_MSG:
-            for topic in unit_topics['output_topic'][:1]:
-                msg = f"messages: {msg_count // 100} {msg_count}"
-                topic = f'{settings.PEPEUNIT_URL}/output/{unit_uuid}/{topic}'
-                result = client.publish(topic, msg)
-                status = result[0]
-                if status == 0:
-                    print(f"Send `{msg}` to topic `{topic}`")
-                else:
-                    print(f"Failed to send message to topic {topic}")
+            for topic in schema_dict['output_topic'].keys():
+
+                msg = f"messages: {msg_count // 10}"
+                pub_output_topic_by_name(client, topic, msg)
 
             msg_count += 1
             last_pub = time.time()
 
         if (time.time() - last_state_pub) >= settings.STATE_SEND_INTERVAL:
-
+            
+            topic = schema_dict['output_base_topic']['state/pepeunit'][0]
             msg = get_unit_state()
-            topic = f"{settings.PEPEUNIT_URL}/output_base/{unit_uuid}/{unit_topics['output_base_topic'][0]}"
 
             result = client.publish(topic, msg)
             status = result[0]
