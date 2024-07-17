@@ -27,6 +27,7 @@ def connect_mqtt():
     def on_message(client, userdata, msg):
 
         struct_topic = get_topic_split(msg.topic)
+        print(struct_topic)
 
         if len(struct_topic) == 5:
 
