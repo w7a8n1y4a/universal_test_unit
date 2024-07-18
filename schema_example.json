@@ -6,13 +6,9 @@
         "state/pepeunit"
     ],
     "input_topic": [
-        "relay_state/pepeunit"
+        "input/pepeunit"
     ],
     "output_topic": [
-        "one/pepeunit",
-        "two/pepeunit",
-        "three/pepeunit",
-        "four/pepeunit",
-        "five/pepeunit"
+        "output/pepeunit"
     ]
 }
