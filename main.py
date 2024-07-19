@@ -87,7 +87,10 @@ def connect_mqtt():
 
                 with open('schema.json', 'w') as f:
                     f.write(json.dumps(json.loads(r.json()), indent=4))
-                    
+                
+                logging.info("Schema is Updated")
+                logging.info("I'll be back")
+                os.execl(sys.executable, *([sys.executable] + sys.argv))
         else:
             print(struct_topic)
             print(msg.payload.decode())
