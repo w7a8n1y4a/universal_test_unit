@@ -75,6 +75,19 @@ def connect_mqtt():
                     logging.info("I'll be back")
 
                     os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+            if destination == 'input_base_topic' and topic_name == 'schema_update':
+                headers = {
+                    'accept': 'application/json',
+                    'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
+                }
+
+                url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/get_current_schema/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}'
+                r = httpx.get(url=url, headers=headers)
+
+                with open('schema.json', 'w') as f:
+                    f.write(json.dumps(json.loads(r.json()), indent=4))
+                    
         else:
             print(struct_topic)
             print(msg.payload.decode())

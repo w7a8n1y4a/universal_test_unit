@@ -1,6 +1,7 @@
 {
     "input_base_topic": [
-        "update/pepeunit"
+        "update/pepeunit",
+        "schema_update/pepeunit"
     ],
     "output_base_topic": [
         "state/pepeunit"
