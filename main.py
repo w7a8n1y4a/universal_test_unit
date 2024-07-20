@@ -12,7 +12,7 @@ import zlib
 from paho.mqtt import client as mqtt_client
 
 from config import settings
-from utils.utils import get_unit_schema, get_unit_uuid, get_topic_split, get_unit_state, get_input_topics, pub_output_topic_by_name
+from utils.utils import get_unit_schema, get_unit_uuid, get_topic_split, get_unit_state, get_input_topics, pub_output_topic_by_name, search_topic_in_schema
 
 
 def connect_mqtt():
@@ -91,9 +91,23 @@ def connect_mqtt():
                 logging.info("Schema is Updated")
                 logging.info("I'll be back")
                 os.execl(sys.executable, *([sys.executable] + sys.argv))
-        else:
-            print(struct_topic)
-            print(msg.payload.decode())
+        elif len(struct_topic) == 3:
+            schema_dict = get_unit_schema()
+            
+            topic_type, topic_name = search_topic_in_schema(schema_dict, struct_topic[1])
+            
+            if topic_type == 'input_topic' and topic_name == 'input/pepeunit':
+                
+                print('Success load input state')
+                value = msg.payload.decode()
+                
+                value = int(value)
+                
+                with open('log.json', 'w') as f:
+                    f.write(json.loads({'value': value, 'input_topic': struct_topic}))
+                
+                for topic_name in schema_dict['output_topic'].keys():
+                    pub_output_topic_by_name(client, schema_dict['output_topic']['output/pepeunit'], str(value))
 
     def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscribed: " + str(mid) + " " + str(granted_qos))

@@ -56,3 +56,13 @@ def pub_output_topic_by_name(client, topic_name: str, message: str) -> None:
             print(f"Send `{message}` to topic `{topic}`")
         else:
             print(f"Failed to send message to topic {topic}")
+
+def search_topic_in_schema(schema_dict: dict, node_uuid: str) -> tuple[str, str]:
+
+    for topic_type in schema_dict.keys():
+        for topic_name in schema_dict[topic_type].keys():
+            for topic in schema_dict[topic_type][topic_name]:
+                if topic.find(node_uuid) >= 0:
+                    return (topic_type, topic_name)
+
+    raise ValueError
