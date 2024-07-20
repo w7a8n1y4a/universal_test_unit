@@ -104,10 +104,10 @@ def connect_mqtt():
                 value = int(value)
                 
                 with open('log.json', 'w') as f:
-                    f.write(json.loads({'value': value, 'input_topic': struct_topic}))
+                    f.write(json.dumps({'value': value, 'input_topic': struct_topic}))
                 
                 for topic_name in schema_dict['output_topic'].keys():
-                    pub_output_topic_by_name(client, schema_dict['output_topic']['output/pepeunit'], str(value))
+                    pub_output_topic_by_name(client, 'output/pepeunit', str(value))
 
     def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscribed: " + str(mid) + " " + str(granted_qos))

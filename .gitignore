@@ -1,5 +1,6 @@
 env.json
 schema.json
+log.json
 venv
 .idea
 tmp/*
