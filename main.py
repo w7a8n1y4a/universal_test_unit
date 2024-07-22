@@ -46,7 +46,7 @@ def connect_mqtt():
                     wbits = 9
                     level = 9
 
-                    url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+                    url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
                     r = httpx.get(url=url, headers=headers)
 
                     filepath = f'tmp/update.tgz'
@@ -82,7 +82,7 @@ def connect_mqtt():
                     'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
                 }
 
-                url = f'https://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/get_current_schema/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}'
+                url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/get_current_schema/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}'
                 r = httpx.get(url=url, headers=headers)
 
                 with open('schema.json', 'w') as f:

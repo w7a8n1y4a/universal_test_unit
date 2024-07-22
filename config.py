@@ -5,6 +5,7 @@ class BaseConfig:
     """ Config variables """
 
     PEPEUNIT_URL = ''
+    HTTP_TYPE = ''
     MQTT_URL = ''
     PEPEUNIT_TOKEN = ''
     SYNC_ENCRYPT_KEY = ''
