@@ -35,19 +35,63 @@ def connect_mqtt():
 
             if destination == 'input_base_topic' and topic_name == 'update':
 
-                new_version = json.loads(msg.payload.decode())['NEW_COMMIT_VERSION']
-                if settings.COMMIT_VERSION != new_version:
+                update_dict = json.loads(msg.payload.decode())
+                new_version = update_dict['NEW_COMMIT_VERSION']
 
-                    headers = {
-                        'accept': 'application/json',
-                        'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
-                    }
+                wbits = 9
+                level = 9
 
-                    wbits = 9
-                    level = 9
+                headers = {
+                    'accept': 'application/json',
+                    'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
+                }
 
-                    url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
-                    r = httpx.get(url=url, headers=headers)
+                pepe_url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+
+                if 'COMPILED_FIRMWARE_LINK' in update_dict:
+
+                    new_version_path = 'tmp/update'
+                    shutil.rmtree(new_version_path, ignore_errors=True)
+                    os.mkdir(new_version_path)
+
+                    compile_link = update_dict['COMPILED_FIRMWARE_LINK']
+                    print(compile_link)
+                    r = httpx.get(url=compile_link)
+
+                    filepath = f'tmp/update.zip'
+                    with open(filepath, 'wb') as f:
+                        print(filepath)
+                        f.write(r.content)
+
+                    shutil.unpack_archive(filepath, new_version_path, 'zip')
+
+                    r = httpx.get(url=pepe_url, headers=headers)
+
+                    filepath = f'tmp/update.tgz'
+                    with open(filepath, 'wb') as f:
+                        print(filepath)
+                        f.write(r.content)
+
+                    with open(filepath, 'rb') as f:
+
+                        producer = zlib.decompressobj(wbits=wbits)
+                        tar_data = producer.decompress(f.read()) + producer.flush()
+
+                        tar_filepath = 'tmp/update.tar'
+                        with open(tar_filepath, 'wb') as tar_file:
+                            tar_file.write(tar_data)
+
+                        shutil.unpack_archive(tar_filepath, new_version_path, 'tar')
+
+                    shutil.copytree(new_version_path, './', dirs_exist_ok=True)
+                    logging.info("I'll be back")
+
+                    os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+
+                elif settings.COMMIT_VERSION != new_version:
+
+                    r = httpx.get(url=pepe_url, headers=headers)
 
                     filepath = f'tmp/update.tgz'
                     with open(filepath, 'wb') as f:
