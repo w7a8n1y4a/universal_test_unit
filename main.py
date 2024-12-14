@@ -49,7 +49,9 @@ def connect_mqtt():
                 pepe_url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
 
                 if 'COMPILED_FIRMWARE_LINK' in update_dict:
-
+                    
+                    #test comment
+                    
                     new_version_path = 'tmp/update'
                     shutil.rmtree(new_version_path, ignore_errors=True)
                     os.mkdir(new_version_path)
