@@ -7,6 +7,7 @@ class BaseConfig:
     PEPEUNIT_URL = ''
     HTTP_TYPE = ''
     MQTT_URL = ''
+    MQTT_PORT = 1883
     PEPEUNIT_TOKEN = ''
     SYNC_ENCRYPT_KEY = ''
     SECRET_KEY = ''

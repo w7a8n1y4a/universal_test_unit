@@ -168,7 +168,7 @@ def connect_mqtt():
     client.on_subscribe = on_subscribe
     client.on_message = on_message
 
-    client.connect(settings.MQTT_URL, 1883)
+    client.connect(settings.MQTT_URL, settings.MQTT_PORT)
     return client
 
 def publish(client):
