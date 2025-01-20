@@ -146,8 +146,6 @@ def connect_mqtt():
                 
                 print('Success load input state')
                 value = msg.payload.decode()
-                
-                value = msg.payload.decode()
                 try:
                     value = int(value)
                     with open('log.json', 'w') as f:
