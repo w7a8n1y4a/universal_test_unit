@@ -21,8 +21,8 @@
 ## env_example.json
 
 ```json
-{   
-    "USER_VARIABLE": "text",
+{
+    "DELAY_PUB_MSG": 1,   
     "PEPEUNIT_URL": "unit.example.com",
     "HTTP_TYPE": "https",
     "MQTT_URL": "emqx.example.com",
@@ -30,7 +30,6 @@
     "PEPEUNIT_TOKEN": "jwt_token",
     "SYNC_ENCRYPT_KEY": "",
     "SECRET_KEY": "32_bit_secret_key",
-    "DELAY_PUB_MSG": 1,
     "PING_INTERVAL": 30,
     "STATE_SEND_INTERVAL": 300
 }
