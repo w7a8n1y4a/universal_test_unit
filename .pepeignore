@@ -1,0 +1,8 @@
+LICENSE
+*.md
+.git
+env_example.json
+schema_example.json
+.gitignore
+.gitlab-ci.yml
+.pepeignore
