@@ -59,7 +59,7 @@
 ```
 
 ### Assignment of Device Topics
-- `input` `input/pepeunit` - принимает в качестве значения натуральные числа, записывает их в `log.json`. После записи, отправляет полученное число в `output_topic`.
+- `input` `input/pepeunit` - принимает в качестве значения натуральные числа, записывает их в `log.json`. После записи, отправляет полученное число в `output_topic`
 - `output` `output/pepeunit` - отправляет сообщение в формате: `message: N`, где `N` - остаток от деления на `10`, числа циклов отправки сообщений в `output/pepeunit`
 
 ## Work algorithm
