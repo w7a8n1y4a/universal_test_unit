@@ -46,7 +46,7 @@ def connect_mqtt():
                     'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
                 }
 
-                pepe_url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
+                pepe_url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}{settings.PEPEUNIT_APP_PREFIX}{settings.PEPEUNIT_API_ACTUAL_PREFIX}/units/firmware/tgz/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}?wbits={str(wbits)}&level={str(level)}'
 
                 if 'COMPILED_FIRMWARE_LINK' in update_dict:
                     
@@ -128,7 +128,7 @@ def connect_mqtt():
                     'x-auth-token': settings.PEPEUNIT_TOKEN.encode()
                 }
 
-                url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}/pepeunit/api/v1/units/get_current_schema/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}'
+                url = f'{settings.HTTP_TYPE}://{settings.PEPEUNIT_URL}{settings.PEPEUNIT_APP_PREFIX}{settings.PEPEUNIT_API_ACTUAL_PREFIX}/units/get_current_schema/{get_unit_uuid(settings.PEPEUNIT_TOKEN)}'
                 r = httpx.get(url=url, headers=headers)
 
                 with open('schema.json', 'w') as f:

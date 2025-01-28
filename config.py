@@ -5,6 +5,8 @@ class BaseConfig:
     """ Config variables """
 
     PEPEUNIT_URL = ''
+    PEPEUNIT_APP_PREFIX = ''
+    PEPEUNIT_API_ACTUAL_PREFIX = ''
     HTTP_TYPE = ''
     MQTT_URL = ''
     MQTT_PORT = 1883
